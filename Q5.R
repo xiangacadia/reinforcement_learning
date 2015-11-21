@@ -5,8 +5,6 @@ y <- 1:4
 
 rewards <- matrix(rep(0, 20), nrow=4)
 rewards[1, 5] <- 100
-#rewards[1, 4] <- 1
-#rewards[2, 4] <- -1
 
 values <- rewards # initial values
 values[values < 1000] = 0
@@ -45,41 +43,44 @@ act <- function(action, state) {
   return(new.state)
 }
 
+calculateProb <- function(action, state){
+  state.transition.prob <- transition[[action]]
+  if (states[1] == 5 )
+  {
+    state.transition.prob["W"]=0 
+    state.transition.prob[state.transition.prob==0.5] = 0.75
+  }
+  if(states[2] == 4)
+  {
+    state.transition.prob["W"]=0 
+    state.transition.prob[state.transition.prob==0.5] = 0.75
+  }
+}
+
 bellman.update <- function(action, state, values, gamma=1) {
   state.transition.prob <- transition[[action]]
   q <- rep(0, length(state.transition.prob))
   for(i in 1:length(state.transition.prob)) {        
     new.state <- act(names(state.transition.prob)[i], state) 
-    q[i] <- (state.transition.prob[i] * (rewards[new.state["y"], new.state["x"]] + (gamma * values[new.state["y"], new.state["x"]])))
-    #print("prob\n")
-  #   print(state.transition.prob[i])
- #    print("rewards")
-# print(rewards[new.state["y"], new.state["x"]] )
-
+    q[i] <- state.transition.prob[i] * (rewards[new.state["y"], new.state["x"]] + (gamma * values[new.state["y"], new.state["x"]]))
   }
-  print("q values")
-  print(q)
   sum(q)
-
 }
 
 value.iteration <- function(states, actions, rewards, values, gamma, niter) {
   for (j in 1:niter) {
+    # iterate all states
     for (i in 1:nrow(states)) {
       state <- unlist(states[i,])
       if(i %in% c(5)) next # terminal states
-      q.values <- as.numeric(lapply(actions, bellman.update, state=state, values=values, gamma=gamma))
+      q.values <- as.numeric(lapply(actions[1], bellman.update, state=state, values=values, gamma=gamma))
       values[state["y"], state["x"]] <- max(q.values)
-  #    print("state y:")
-   #   print(state["y"])
-    #  print("state x")
-     # print(state["x"])
-      #print("q values")
-      #print(q.values)
     }
   }
   return(values)
 }
 
-final.values <- value.iteration(states=states, actions=actions, rewards=rewards, values=values, gamma=0.9, niter=5000)
+final.values <- value.iteration(states=states, actions=actions, rewards=rewards, values=values, gamma=0.9, niter=100)
+
+print(final.values)
 
